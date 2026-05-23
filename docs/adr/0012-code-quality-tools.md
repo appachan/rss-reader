@@ -42,3 +42,7 @@ android {
 - 3 ツールはそれぞれ独立した責務を持ち、衝突しない
 - CI（GitHub Actions）の必須ステップに各ツール実行を含める：`./gradlew lint`, ktfmt check, Detekt
 - Android Lint baseline（`lint-baseline.xml`）は使用しない。新規プロジェクトとして最初から warning 0 を維持する
+
+## Update 2026-05-24: Disable advisory-churn lint rules
+
+当初の「Lint warning も含めて全件 fail」方針に対して、upstream リリースの度に永続発火する advisory rule（`NewerVersionAvailable` / `GradleDependency` / `AndroidGradlePluginVersion` / `OldTargetApi` / `ObsoleteSdkInt`）を disable する。これらは「いつ更新するか」のプロジェクト判断であり、ビルドを落とす shape の問題ではない。
