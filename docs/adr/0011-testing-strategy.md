@@ -40,3 +40,9 @@ Fake 優先で組む：
 
 - Kotest / MockK / Turbine / kotlinx-coroutines-test は KMP 対応のため将来 multiplatform 化しても利用可能
 - Compose テストは独立した JUnit4 文脈で共存させる
+
+## Update 2026-05-24: shared testing module
+
+`:shared:testing` モジュールを新設し、Kotest の `AbstractProjectConfig` 継承クラスで `coroutineTestScope = true` をプロジェクトデフォルトにする。`TestConventionPlugin` が全モジュールの testImplementation に :shared:testing を流し込み、`kotest.framework.config.fqn` system property で config クラスを pin する。
+
+このモジュールは将来 Koin test 配線、Turbine ヘルパ、Fake repositories の集積点になる。suspend テストは `runTest { }` ラッパなしで TestScope を取得できる。
