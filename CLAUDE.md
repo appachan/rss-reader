@@ -1,6 +1,6 @@
 # CLAUDE.md — RSS Reader
 
-Android (Kotlin) の RSS リーダー。アーキテクチャ判断は `docs/adr/` を正とする。
+Android (Kotlin) の RSS リーダー。
 
 ## Verification loop
 

@@ -1,0 +1,10 @@
+{
+  "plansDirectory": ".claude/plans",
+  "permissions": {
+    "deny": [
+      "Read(./local.properties)",
+      "Edit(./local.properties)"
+    ]
+  }
+}
+
