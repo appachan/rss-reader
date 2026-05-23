@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -29,10 +30,13 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 rootProject.name = "rss-reader"
 
 include(":app")
 include(":feature:feed")
 include(":shared:domain")
 include(":shared:infrastructure")
+include(":shared:testing")
 include(":shared:ui")

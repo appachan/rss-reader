@@ -1,15 +1,13 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.compose.compiler)
+    id("rssreader.android.application")
+    id("rssreader.android.compose")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "com.github.appachan.rssreader"
-    compileSdk = 36
     defaultConfig {
         applicationId = "com.github.appachan.rssreader"
-        minSdk = 29
-        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
     }
@@ -17,45 +15,33 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    buildFeatures {
-        compose = true
-        aidl = false
-        buildConfig = false
-        shaders = false
-    }
 
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-}
-
-kotlin {
-    jvmToolchain(17)
+    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
 
 dependencies {
-    implementation(project(":feature:feed"))
-    implementation(project(":shared:infrastructure"))
-    implementation(project(":shared:ui"))
-
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
+    implementation(projects.feature.feed)
+    implementation(projects.shared.infrastructure)
+    implementation(projects.shared.ui)
 
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+
+    implementation(libs.androidx.work.runtime)
+
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.androidx.workmanager)
+    implementation(libs.koin.compose.navigation3)
 }

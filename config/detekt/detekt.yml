@@ -1,0 +1,8 @@
+config:
+  # detekt.yml 内の deprecated key / unknown property を error に昇格させ、設定の腐敗を
+  # 早期検出する。
+  warningsAsErrors: true
+
+# Formatting rules are handled by ktfmt (ADR-12). The detekt-formatting plugin
+# artifact is intentionally NOT added so the `formatting` ruleset cannot be
+# enabled by accident.
