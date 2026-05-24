@@ -38,7 +38,11 @@ if [ ! -x "$SDKMANAGER" ]; then
   rm -rf "$tmp"
 fi
 
+# `yes` is killed by SIGPIPE once sdkmanager stops reading; without this
+# pipefail would surface that as exit 141 and abort the script.
+set +o pipefail
 yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null
+set -o pipefail
 "$SDKMANAGER" --sdk_root="$SDK_ROOT" \
   "platform-tools" \
   "platforms;android-${COMPILE_SDK}" \
