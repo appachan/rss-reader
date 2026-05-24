@@ -46,3 +46,9 @@ Fake 優先で組む：
 `:shared:testing` モジュールを新設し、Kotest の `AbstractProjectConfig` 継承クラスで `coroutineTestScope = true` をプロジェクトデフォルトにする。`TestConventionPlugin` が全モジュールの testImplementation に :shared:testing を流し込み、`kotest.framework.config.fqn` system property で config クラスを pin する。
 
 このモジュールは将来 Koin test 配線、Turbine ヘルパ、Fake repositories の集積点になる。suspend テストは `runTest { }` ラッパなしで TestScope を取得できる。
+
+## Update 2026-05-24: Roborazzi VRT は当面ローカル検証に留める
+
+`@Preview` の VRT を Roborazzi で実配線した。スナップショットの比較（verify）は当面ローカル運用に留め、
+CI（GitHub Actions）には verify を入れない。ローカル（macOS）と CI（Linux）でフォント描画が異なり
+golden の偽差分が出るため、CI verify を入れるなら golden を Linux 側で生成して SoT 化する運用が前提になる。
