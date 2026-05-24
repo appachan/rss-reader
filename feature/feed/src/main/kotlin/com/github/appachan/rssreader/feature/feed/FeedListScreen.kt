@@ -4,26 +4,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,10 +41,22 @@ import org.koin.compose.viewmodel.koinViewModel
 fun FeedListScreen(modifier: Modifier = Modifier, viewModel: FeedListViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.load() }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val refreshFailedMessage = stringResource(R.string.feed_list_error)
+    LaunchedEffect(viewModel, snackbarHostState) {
+        viewModel.events.collect { event ->
+            when (event) {
+                FeedListEvent.RefreshFailed -> snackbarHostState.showSnackbar(refreshFailedMessage)
+            }
+        }
+    }
+
     FeedListScreen(
         uiState = uiState,
         onRefresh = viewModel::refresh,
         onRetry = viewModel::retry,
+        snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
 }
@@ -54,17 +67,23 @@ private fun FeedListScreen(
     uiState: FeedListUiState,
     onRefresh: () -> Unit,
     onRetry: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
-    PullToRefreshBox(
-        isRefreshing = uiState.isRefreshing,
-        onRefresh = onRefresh,
-        modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars),
-    ) {
-        when {
-            uiState.isLoading && uiState.items.isEmpty() -> LoadingContent()
-            uiState.isError && uiState.items.isEmpty() -> ErrorContent(onRetry)
-            else -> FeedList(uiState.items)
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ) {
+            when {
+                uiState.isLoading && uiState.items.isEmpty() -> LoadingContent()
+                uiState.isError && uiState.items.isEmpty() -> ErrorContent(onRetry)
+                else -> FeedList(uiState.items)
+            }
         }
     }
 }
@@ -96,9 +115,9 @@ private fun ErrorContent(onRetry: () -> Unit) {
 @Composable
 private fun FeedList(items: List<FeedRowUiModel>) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(items = items, key = { it.feedId.value }) { row ->
+        itemsIndexed(items = items, key = { _, row -> row.feedId.value }) { index, row ->
             FeedRow(row)
-            HorizontalDivider()
+            if (index < items.lastIndex) HorizontalDivider()
         }
     }
 }
@@ -190,6 +209,7 @@ private fun FeedListLoadedPreview() {
                     ),
                 onRefresh = {},
                 onRetry = {},
+                snackbarHostState = remember { SnackbarHostState() },
             )
         }
     }
@@ -216,6 +236,7 @@ private fun FeedListRefreshingPreview() {
                     ),
                 onRefresh = {},
                 onRetry = {},
+                snackbarHostState = remember { SnackbarHostState() },
             )
         }
     }
@@ -230,6 +251,7 @@ private fun FeedListLoadingPreview() {
                 uiState = FeedListUiState(isLoading = true),
                 onRefresh = {},
                 onRetry = {},
+                snackbarHostState = remember { SnackbarHostState() },
             )
         }
     }
@@ -240,7 +262,12 @@ private fun FeedListLoadingPreview() {
 private fun FeedListErrorPreview() {
     MaterialTheme {
         Surface {
-            FeedListScreen(uiState = FeedListUiState(isError = true), onRefresh = {}, onRetry = {})
+            FeedListScreen(
+                uiState = FeedListUiState(isError = true),
+                onRefresh = {},
+                onRetry = {},
+                snackbarHostState = remember { SnackbarHostState() },
+            )
         }
     }
 }

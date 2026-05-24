@@ -6,13 +6,15 @@ import com.github.appachan.rssreader.shared.domain.model.Feed
 import com.github.appachan.rssreader.shared.domain.repository.ArticleRepository
 import com.github.appachan.rssreader.shared.domain.repository.FeedRepository
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 
 /**
  * Pattern ① ViewModel for the feed list. State management is intentionally the naive flat approach:
@@ -32,7 +34,13 @@ class FeedListViewModel(
     private val _uiState = MutableStateFlow(FeedListUiState())
     val uiState: StateFlow<FeedListUiState> = _uiState.asStateFlow()
 
+    // One-shot events (a refresh failure shown as a transient message). extraBufferCapacity = 1 so
+    // emit never suspends when the screen is not currently collecting.
+    private val _events = MutableSharedFlow<FeedListEvent>(extraBufferCapacity = 1)
+    val events: SharedFlow<FeedListEvent> = _events.asSharedFlow()
+
     private var loaded = false
+    private var refreshJob: Job? = null
     private var articleJobs: List<Job> = emptyList()
 
     /**
@@ -97,7 +105,10 @@ class FeedListViewModel(
             // until articles actually arrive. A genuinely empty feed is resolved when the
             // surrounding refresh completes (see triggerRefresh).
             if (articles.isEmpty()) return@collect
-            val latest = articles.maxByOrNull { it.publishedAt ?: Instant.DISTANT_PAST }
+            // Latest = newest publishedAt; undated articles sort oldest and ties break by id, so
+            // the
+            // choice is deterministic (kotlinx Instant? compares null as the smallest value).
+            val latest = articles.maxWithOrNull(compareBy({ it.publishedAt }, { it.id.value }))
             _uiState.update { state ->
                 state.copy(
                     items =
@@ -118,7 +129,10 @@ class FeedListViewModel(
     }
 
     private fun triggerRefresh(initial: Boolean) {
-        viewModelScope.launch {
+        // Serialize refreshes: ignore a new request while one is still in flight so overlapping
+        // refresh()/retry() calls can't interleave their flag writes.
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
             _uiState.update { state ->
                 if (initial) {
                     state.copy(isLoading = true, isError = false)
@@ -126,22 +140,30 @@ class FeedListViewModel(
                     state.copy(isRefreshing = true, isError = false)
                 }
             }
-            val result = feedRepository.refreshAllFeeds()
-            _uiState.update { state ->
-                result.fold(
+            feedRepository
+                .refreshAllFeeds()
+                .fold(
                     onSuccess = {
-                        // Refresh done: any row still loading simply has no articles.
-                        state.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            items = state.items.map { it.copy(isArticleLoading = false) },
-                        )
+                        // Refresh persisted everything (see FeedRepository.refreshAllFeeds): any
+                        // row still loading simply has no articles.
+                        _uiState.update { state ->
+                            state.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                items = state.items.map { it.copy(isArticleLoading = false) },
+                            )
+                        }
                     },
                     onFailure = {
-                        state.copy(isLoading = false, isRefreshing = false, isError = true)
+                        // Keep existing rows visible: surface the failure full-screen only when
+                        // nothing is shown yet, otherwise as a one-shot snackbar event.
+                        val hadRows = _uiState.value.items.isNotEmpty()
+                        _uiState.update { state ->
+                            state.copy(isLoading = false, isRefreshing = false, isError = !hadRows)
+                        }
+                        if (hadRows) _events.emit(FeedListEvent.RefreshFailed)
                     },
                 )
-            }
         }
     }
 }

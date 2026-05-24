@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
 
 /**
  * Controllable in-memory fake for ViewModel tests. Mirrors the production fake's dependency-ordered
@@ -32,6 +33,7 @@ class FakeFeedDataSource(
 
     private val feedsFlow = MutableStateFlow<List<Feed>>(emptyList())
     private val articlesFlow = MutableStateFlow<Map<Long, List<Article>>>(emptyMap())
+    private var refreshCount = 0
 
     override fun observeFeeds(): Flow<List<Feed>> = feedsFlow.asStateFlow()
 
@@ -56,7 +58,12 @@ class FakeFeedDataSource(
             return Result.failure(IllegalStateException("refresh failed"))
         }
         delay(feedListDelayMs)
-        feedsFlow.value = feeds
+        refreshCount++
+        // Mirror production (FakeRssStore), which rebuilds feeds with a fresh lastFetchedAt each
+        // refresh so the StateFlow re-emits and observeFeeds re-runs restartArticleJobs.
+        feedsFlow.value = feeds.map {
+            it.copy(lastFetchedAt = Instant.fromEpochMilliseconds(refreshCount.toLong()))
+        }
         coroutineScope {
             feeds.forEachIndexed { index, feed ->
                 launch {

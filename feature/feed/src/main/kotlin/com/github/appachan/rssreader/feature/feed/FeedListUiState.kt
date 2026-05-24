@@ -30,3 +30,12 @@ data class FeedRowUiModel(
     val latestArticlePublishedAt: Instant?,
     val isArticleLoading: Boolean,
 )
+
+/**
+ * One-shot UI events that must be shown once and not re-emitted on recomposition. Distinct from
+ * [FeedListUiState], which is the durable screen state the UI renders directly.
+ */
+sealed interface FeedListEvent {
+    /** A refresh failed while rows were already on screen; show a transient message (snackbar). */
+    data object RefreshFailed : FeedListEvent
+}

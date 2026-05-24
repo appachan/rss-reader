@@ -145,6 +145,29 @@ class FeedListViewModelTest :
                 items shouldHaveSize 1
             }
         }
+
+        test(
+            "initial load: a feed with no articles resolves to not-loading with no article title"
+        ) {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val scheduler = dispatcher.scheduler
+            val fake =
+                FakeFeedDataSource(
+                    feeds = listOf(feed(1)),
+                    articles = emptyMap(),
+                    feedListDelayMs = FEED_LIST_DELAY,
+                )
+            val viewModel = FeedListViewModel(fake, fake)
+            viewModel.load()
+
+            scheduler.advanceUntilIdle()
+            with(viewModel.uiState.value) {
+                items shouldHaveSize 1
+                items[0].isArticleLoading shouldBe false
+                items[0].latestArticleTitle shouldBe null
+            }
+        }
     })
 
 private fun feed(id: Long): Feed =
