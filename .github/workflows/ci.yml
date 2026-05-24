@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: temurin
+          # build-logic の jvmToolchain(17) と一致させる literal。
+          # build 側の SoT は convention plugin（一元化しない方針）
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+
+      - name: Spotless (format check)
+        run: ./gradlew spotlessCheck
+
+      - name: Detekt (static analysis)
+        if: ${{ !cancelled() }}
+        run: ./gradlew detekt
+
+      - name: Android Lint
+        if: ${{ !cancelled() }}
+        run: ./gradlew lint
+
+      - name: Unit tests (Kotest)
+        if: ${{ !cancelled() }}
+        run: ./gradlew test
