@@ -6,3 +6,13 @@ config:
 # Formatting rules are handled by ktfmt (ADR-12). The detekt-formatting plugin
 # artifact is intentionally NOT added so the `formatting` ruleset cannot be
 # enabled by accident.
+
+naming:
+  FunctionNaming:
+    # Jetpack Compose @Composable functions are PascalCase by convention (ADR-0003).
+    ignoreAnnotated: ['Composable']
+
+style:
+  UnusedPrivateMember:
+    # @Preview composables are tooling entry points and have no in-code caller.
+    ignoreAnnotated: ['Preview']
