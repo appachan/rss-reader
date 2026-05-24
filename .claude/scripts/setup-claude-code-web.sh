@@ -10,10 +10,11 @@
 # environment settings). It is intentionally self-contained with no repo deps.
 #
 # Prerequisites configured in the same environment settings dialog:
-#   - Network access = Custom (defaults + dl.google.com, maven.google.com;
-#     add api.foojay.io if relying on Gradle's JDK 17 toolchain resolver).
+#   - Network access = Custom (defaults + dl.google.com, maven.google.com).
 #     The Trusted default does NOT include dl.google.com / maven.google.com,
 #     so AGP, AndroidX and the SDK packages below are all unreachable without it.
+#     (api.foojay.io is NOT needed: JDK 17 is apt-installed below instead of
+#     being resolved via Gradle's toolchain downloader.)
 #   - Environment variable ANDROID_HOME=/opt/android-sdk (exports inside this
 #     script do not reach the session shell; the env config does).
 #
@@ -27,6 +28,13 @@ CMDLINE_URL="https://dl.google.com/android/repository/commandlinetools-linux-110
 SDKMANAGER="${SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
 
 command -v unzip >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq unzip; }
+
+# build-logic is an included build that requests jvmToolchain(17); the root
+# foojay resolver does not apply to included builds, so Gradle needs a real
+# JDK 17 on disk (the base image ships JDK 21 only). Installing it lets Gradle's
+# toolchain auto-detection find it under /usr/lib/jvm. Idempotent like unzip.
+ls -d /usr/lib/jvm/java-17-openjdk* >/dev/null 2>&1 \
+  || { apt-get update -qq && apt-get install -y -qq openjdk-17-jdk-headless; }
 
 if [ ! -x "$SDKMANAGER" ]; then
   mkdir -p "${SDK_ROOT}/cmdline-tools"
