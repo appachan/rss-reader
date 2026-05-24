@@ -25,14 +25,22 @@ COMPILE_SDK="36"
 CMDLINE_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
 SDKMANAGER="${SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
 
-command -v unzip >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq unzip; }
+# `apt-get update` can exit non-zero when a third-party PPA baked into the image
+# is unreachable under the restricted Custom network (e.g. ppa.launchpadcontent.net
+# returns 403). Under `set -e` that would abort the whole setup before install
+# runs, so tolerate it and let install proceed from the lists already in the image.
+apt_install() {
+  apt-get update -qq || true
+  apt-get install -y -qq "$@"
+}
+
+command -v unzip >/dev/null 2>&1 || apt_install unzip
 
 # build-logic is an included build that requests jvmToolchain(17); the root
-# foojay resolver does not apply to included builds, so Gradle needs a real
-# JDK 17 on disk (the base image ships JDK 21 only). Installing it lets Gradle's
-# toolchain auto-detection find it under /usr/lib/jvm. Idempotent like unzip.
-ls -d /usr/lib/jvm/java-17-openjdk* >/dev/null 2>&1 \
-  || { apt-get update -qq && apt-get install -y -qq openjdk-17-jdk-headless; }
+# foojay resolver does not apply to included builds, so Gradle needs a real JDK
+# 17 on disk (the base image ships JDK 21 only). Installing it lets Gradle's
+# toolchain auto-detection find it under /usr/lib/jvm.
+ls -d /usr/lib/jvm/java-17-openjdk* >/dev/null 2>&1 || apt_install openjdk-17-jdk-headless
 
 if [ ! -x "$SDKMANAGER" ]; then
   mkdir -p "${SDK_ROOT}/cmdline-tools"
