@@ -8,8 +8,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -122,11 +124,11 @@ class FeedListViewModelTest :
             val scheduler = dispatcher.scheduler
             val fake =
                 FakeFeedDataSource(
-                    feeds = listOf(feed(1)),
-                    articles = mapOf(FeedId(1) to listOf(article(1))),
-                    failRefresh = true,
-                    feedListDelayMs = FEED_LIST_DELAY,
-                )
+                        feeds = listOf(feed(1)),
+                        articles = mapOf(FeedId(1) to listOf(article(1))),
+                        feedListDelayMs = FEED_LIST_DELAY,
+                    )
+                    .apply { failRefresh = true }
             val viewModel = FeedListViewModel(fake, fake)
             viewModel.load()
 
@@ -167,6 +169,134 @@ class FeedListViewModelTest :
                 items[0].isArticleLoading shouldBe false
                 items[0].latestArticleTitle shouldBe null
             }
+        }
+
+        test("submitAddFeed: a malformed URL is rejected locally without calling the repository") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val scheduler = dispatcher.scheduler
+            val fake = FakeFeedDataSource(feeds = emptyList())
+            val viewModel = FeedListViewModel(fake, fake)
+
+            viewModel.showAddSheet()
+            viewModel.onAddUrlChange("not-a-url")
+            viewModel.submitAddFeed()
+            scheduler.advanceUntilIdle()
+
+            with(viewModel.uiState.value) {
+                addFeedError shouldBe AddFeedError.INVALID_URL
+                isAddingFeed shouldBe false
+                isAddSheetVisible shouldBe true
+            }
+            fake.addedUrls shouldHaveSize 0
+        }
+
+        test("submitAddFeed: success closes the dialog and clears the input") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val scheduler = dispatcher.scheduler
+            val fake = FakeFeedDataSource(feeds = emptyList())
+            val viewModel = FeedListViewModel(fake, fake)
+
+            viewModel.showAddSheet()
+            viewModel.onAddUrlChange("https://example.com/feed.xml")
+            viewModel.submitAddFeed()
+            scheduler.advanceUntilIdle()
+
+            with(viewModel.uiState.value) {
+                isAddingFeed shouldBe false
+                isAddSheetVisible shouldBe false
+                addUrlInput shouldBe ""
+                addFeedError shouldBe null
+            }
+            fake.addedUrls shouldBe listOf("https://example.com/feed.xml")
+        }
+
+        test("submitAddFeed: failure shows COULD_NOT_ADD and keeps the dialog open") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val scheduler = dispatcher.scheduler
+            val fake = FakeFeedDataSource(feeds = emptyList()).apply { failAddFeed = true }
+            val viewModel = FeedListViewModel(fake, fake)
+
+            viewModel.showAddSheet()
+            viewModel.onAddUrlChange("https://example.com/feed.xml")
+            viewModel.submitAddFeed()
+            scheduler.advanceUntilIdle()
+
+            with(viewModel.uiState.value) {
+                isAddingFeed shouldBe false
+                addFeedError shouldBe AddFeedError.COULD_NOT_ADD
+                isAddSheetVisible shouldBe true
+            }
+        }
+
+        test("submitAddFeed: a non-https URL is rejected locally") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val fake = FakeFeedDataSource(feeds = emptyList())
+            val viewModel = FeedListViewModel(fake, fake)
+
+            viewModel.showAddSheet()
+            viewModel.onAddUrlChange("http://example.com/feed.xml")
+            viewModel.submitAddFeed()
+            dispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.uiState.value.addFeedError shouldBe AddFeedError.INVALID_URL
+            fake.addedUrls shouldHaveSize 0
+        }
+
+        test("submitAddFeed: ignores a second submit while one is in flight") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val fake = FakeFeedDataSource(feeds = emptyList())
+            val viewModel = FeedListViewModel(fake, fake)
+
+            viewModel.showAddSheet()
+            viewModel.onAddUrlChange("https://example.com/feed.xml")
+            viewModel.submitAddFeed()
+            viewModel.submitAddFeed()
+            dispatcher.scheduler.advanceUntilIdle()
+
+            fake.addedUrls shouldHaveSize 1
+        }
+
+        test("confirmDeleteFeed: deletes via the repository and clears the pending state") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val scheduler = dispatcher.scheduler
+            val fake = FakeFeedDataSource(feeds = listOf(feed(1)))
+            val viewModel = FeedListViewModel(fake, fake)
+
+            viewModel.requestDeleteFeed(FeedId(1))
+            viewModel.uiState.value.pendingDeletion shouldBe FeedId(1)
+
+            viewModel.confirmDeleteFeed()
+            scheduler.advanceUntilIdle()
+
+            fake.removedIds shouldBe listOf(FeedId(1))
+            viewModel.uiState.value.pendingDeletion shouldBe null
+        }
+
+        test("confirmDeleteFeed: failure emits DeleteFailed and clears the pending state") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val scheduler = dispatcher.scheduler
+            val fake = FakeFeedDataSource(feeds = listOf(feed(1))).apply { failRemoveFeed = true }
+            val viewModel = FeedListViewModel(fake, fake)
+
+            val events = mutableListOf<FeedListEvent>()
+            val collector =
+                CoroutineScope(dispatcher).launch { viewModel.events.collect { events += it } }
+            scheduler.runCurrent()
+
+            viewModel.requestDeleteFeed(FeedId(1))
+            viewModel.confirmDeleteFeed()
+            scheduler.advanceUntilIdle()
+
+            events shouldBe listOf(FeedListEvent.DeleteFailed)
+            viewModel.uiState.value.pendingDeletion shouldBe null
+            collector.cancel()
         }
     })
 

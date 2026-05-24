@@ -4,7 +4,11 @@ plugins {
     alias(libs.plugins.sqldelight)
 }
 
-android { namespace = "com.github.appachan.rssreader.shared.infrastructure" }
+android {
+    namespace = "com.github.appachan.rssreader.shared.infrastructure"
+    // Opt in over the convention default (false) so the HTTP client can gate logging on DEBUG.
+    buildFeatures { buildConfig = true }
+}
 
 sqldelight {
     databases {
@@ -19,6 +23,7 @@ dependencies {
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
+    implementation(libs.koin.android)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
@@ -31,5 +36,9 @@ dependencies {
     implementation(libs.sqldelight.android.driver)
     implementation(libs.sqldelight.coroutines.extensions)
 
+    implementation(libs.rssparser)
+
     implementation(libs.androidx.work.runtime)
+
+    testImplementation(libs.sqldelight.sqlite.driver)
 }

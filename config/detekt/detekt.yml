@@ -12,6 +12,9 @@ complexity:
     # @Preview composables live next to the screen they preview but are tooling entry points,
     # so they shouldn't inflate the file's function count.
     ignoreAnnotatedFunctions: ['Preview']
+    # Feature ViewModels expose load/refresh/retry plus per-action handlers on top of their private
+    # fetch helpers, which comfortably passes the default 11.
+    thresholdInClasses: 16
 
 naming:
   FunctionNaming:

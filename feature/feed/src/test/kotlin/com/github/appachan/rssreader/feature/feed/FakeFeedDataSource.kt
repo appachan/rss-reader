@@ -25,15 +25,25 @@ import kotlinx.datetime.Instant
 class FakeFeedDataSource(
     private val feeds: List<Feed>,
     private val articles: Map<FeedId, List<Article>> = emptyMap(),
-    var failRefresh: Boolean = false,
     private val feedListDelayMs: Long = 0L,
     private val articleBaseDelayMs: Long = 0L,
     private val articleStepDelayMs: Long = 0L,
 ) : FeedRepository, ArticleRepository {
 
+    // Failure toggles set by tests after construction (kept out of the constructor to stay within
+    // the parameter-count budget).
+    var failRefresh: Boolean = false
+    var failAddFeed: Boolean = false
+    var failRemoveFeed: Boolean = false
+
     private val feedsFlow = MutableStateFlow<List<Feed>>(emptyList())
     private val articlesFlow = MutableStateFlow<Map<Long, List<Article>>>(emptyMap())
     private var refreshCount = 0
+
+    /** Recorded calls so tests can assert the ViewModel delegated to the repository. */
+    val addedUrls = mutableListOf<String>()
+    val removedIds = mutableListOf<FeedId>()
+    private var nextId = (feeds.maxOfOrNull { it.id.value } ?: 0L) + 1
 
     override fun observeFeeds(): Flow<List<Feed>> = feedsFlow.asStateFlow()
 
@@ -77,9 +87,22 @@ class FakeFeedDataSource(
 
     override suspend fun refreshFeed(id: FeedId): Result<Unit> = refreshAllFeeds()
 
-    override suspend fun addFeed(url: String): Result<FeedId> = Result.success(FeedId(0L))
+    override suspend fun addFeed(url: String): Result<FeedId> {
+        addedUrls += url
+        if (failAddFeed) return Result.failure(IllegalStateException("add failed"))
+        val id = FeedId(nextId++)
+        feedsFlow.update { current ->
+            current + Feed(id, url, url, siteUrl = null, description = null, lastFetchedAt = null)
+        }
+        return Result.success(id)
+    }
 
-    override suspend fun removeFeed(id: FeedId): Result<Unit> = Result.success(Unit)
+    override suspend fun removeFeed(id: FeedId): Result<Unit> {
+        removedIds += id
+        if (failRemoveFeed) return Result.failure(IllegalStateException("remove failed"))
+        feedsFlow.update { current -> current.filterNot { it.id == id } }
+        return Result.success(Unit)
+    }
 
     override suspend fun markRead(id: ArticleId): Result<Unit> = Result.success(Unit)
 
