@@ -36,6 +36,9 @@ rootProject.name = "rss-reader"
 
 include(":app")
 include(":feature:feed")
+include(":feature:feed-async")
+include(":feature:feed-reducer")
+include(":feature:feed-orbit")
 include(":shared:domain")
 include(":shared:infrastructure")
 include(":shared:testing")
