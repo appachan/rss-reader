@@ -27,6 +27,7 @@ android {
 
 dependencies {
     implementation(projects.feature.feed)
+    implementation(projects.shared.domain)
     implementation(projects.shared.infrastructure)
     implementation(projects.shared.ui)
 
