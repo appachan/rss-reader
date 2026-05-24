@@ -3,6 +3,7 @@ package com.github.appachan.rssreader.feature.feed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.appachan.rssreader.shared.domain.model.Feed
+import com.github.appachan.rssreader.shared.domain.model.FeedId
 import com.github.appachan.rssreader.shared.domain.repository.ArticleRepository
 import com.github.appachan.rssreader.shared.domain.repository.FeedRepository
 import kotlinx.coroutines.Job
@@ -66,6 +67,85 @@ class FeedListViewModel(
     /** Re-attempt after an error. Treated as an initial load when nothing is shown yet. */
     fun retry() {
         triggerRefresh(initial = _uiState.value.items.isEmpty())
+    }
+
+    // --- Add feed ---
+
+    fun showAddSheet() {
+        _uiState.update { it.copy(isAddSheetVisible = true, addUrlInput = "", addFeedError = null) }
+    }
+
+    fun dismissAddSheet() {
+        _uiState.update {
+            it.copy(
+                isAddSheetVisible = false,
+                addUrlInput = "",
+                addFeedError = null,
+                isAddingFeed = false,
+            )
+        }
+    }
+
+    fun onAddUrlChange(url: String) {
+        // Clear the error as soon as the user edits, so it isn't shown against new input.
+        _uiState.update { it.copy(addUrlInput = url, addFeedError = null) }
+    }
+
+    /**
+     * Validate the URL locally, then delegate persistence/validation to [FeedRepository.addFeed].
+     * Success closes the dialog (the new feed appears via [observeFeeds]); failure keeps the dialog
+     * open with an error. Ignores re-entrancy while a request is in flight.
+     */
+    fun submitAddFeed() {
+        if (_uiState.value.isAddingFeed) return
+        val url = _uiState.value.addUrlInput.trim()
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            _uiState.update { it.copy(addFeedError = AddFeedError.INVALID_URL) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isAddingFeed = true, addFeedError = null) }
+            feedRepository
+                .addFeed(url)
+                .fold(
+                    onSuccess = {
+                        _uiState.update {
+                            it.copy(
+                                isAddingFeed = false,
+                                isAddSheetVisible = false,
+                                addUrlInput = "",
+                                addFeedError = null,
+                            )
+                        }
+                    },
+                    onFailure = {
+                        _uiState.update {
+                            it.copy(isAddingFeed = false, addFeedError = AddFeedError.COULD_NOT_ADD)
+                        }
+                    },
+                )
+        }
+    }
+
+    // --- Delete feed ---
+
+    fun requestDeleteFeed(id: FeedId) {
+        _uiState.update { it.copy(pendingDeletion = id) }
+    }
+
+    fun cancelDeleteFeed() {
+        _uiState.update { it.copy(pendingDeletion = null) }
+    }
+
+    /**
+     * Confirm deletion of [FeedListUiState.pendingDeletion]; the row disappears via [observeFeeds].
+     */
+    fun confirmDeleteFeed() {
+        val id = _uiState.value.pendingDeletion ?: return
+        _uiState.update { it.copy(pendingDeletion = null) }
+        viewModelScope.launch {
+            feedRepository.removeFeed(id).onFailure { _events.emit(FeedListEvent.DeleteFailed) }
+        }
     }
 
     private fun observeFeeds(): Job = viewModelScope.launch {

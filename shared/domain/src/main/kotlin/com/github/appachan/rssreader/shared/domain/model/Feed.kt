@@ -9,4 +9,6 @@ data class Feed(
     val siteUrl: String?,
     val description: String?,
     val lastFetchedAt: Instant?,
-)
+) {
+    companion object
+}
