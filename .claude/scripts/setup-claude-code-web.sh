@@ -13,8 +13,6 @@
 #   - Network access = Custom (defaults + dl.google.com, maven.google.com).
 #     The Trusted default does NOT include dl.google.com / maven.google.com,
 #     so AGP, AndroidX and the SDK packages below are all unreachable without it.
-#     (api.foojay.io is NOT needed: JDK 17 is apt-installed below instead of
-#     being resolved via Gradle's toolchain downloader.)
 #   - Environment variable ANDROID_HOME=/opt/android-sdk (exports inside this
 #     script do not reach the session shell; the env config does).
 #
