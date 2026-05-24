@@ -7,6 +7,12 @@ config:
 # artifact is intentionally NOT added so the `formatting` ruleset cannot be
 # enabled by accident.
 
+complexity:
+  TooManyFunctions:
+    # @Preview composables live next to the screen they preview but are tooling entry points,
+    # so they shouldn't inflate the file's function count.
+    ignoreAnnotatedFunctions: ['Preview']
+
 naming:
   FunctionNaming:
     # Jetpack Compose @Composable functions are PascalCase by convention (ADR-0003).

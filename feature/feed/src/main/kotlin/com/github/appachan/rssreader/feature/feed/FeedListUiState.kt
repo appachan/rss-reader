@@ -5,14 +5,17 @@ import kotlinx.datetime.Instant
 
 /**
  * Pattern ① state: a flat UiState that holds [feeds][items], [isLoading], [isRefreshing] and
- * [error] directly as fields, without an Async wrapper type. The later pattern-comparison tasks
+ * [isError] directly as fields, without an Async wrapper type. The later pattern-comparison tasks
  * (TASK-011〜014) re-implement the same screen with different state-management techniques.
+ *
+ * [isError] is a presentation-agnostic flag, not a message: the user-facing error text lives in
+ * string resources and is resolved by the screen, so the ViewModel holds no display strings.
  */
 data class FeedListUiState(
     val items: List<FeedRowUiModel> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
-    val error: String? = null,
+    val isError: Boolean = false,
 )
 
 /**

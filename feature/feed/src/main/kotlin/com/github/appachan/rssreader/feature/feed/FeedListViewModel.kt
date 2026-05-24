@@ -32,18 +32,18 @@ class FeedListViewModel(
     private val _uiState = MutableStateFlow(FeedListUiState())
     val uiState: StateFlow<FeedListUiState> = _uiState.asStateFlow()
 
-    private var feedsJob: Job? = null
+    private var loaded = false
     private var articleJobs: List<Job> = emptyList()
 
-    init {
-        load()
-    }
-
-    /** Initial load: start observing the SSOT and trigger the first network refresh. */
+    /**
+     * Initial load: start observing the SSOT and trigger the first network refresh. Idempotent and
+     * driven from the screen's `LaunchedEffect`, so it runs once per ViewModel even across
+     * recompositions and configuration changes (no constructor side effects → trivially testable).
+     */
     fun load() {
-        if (feedsJob == null) {
-            feedsJob = observeFeeds()
-        }
+        if (loaded) return
+        loaded = true
+        observeFeeds()
         triggerRefresh(initial = true)
     }
 
@@ -121,9 +121,9 @@ class FeedListViewModel(
         viewModelScope.launch {
             _uiState.update { state ->
                 if (initial) {
-                    state.copy(isLoading = true, error = null)
+                    state.copy(isLoading = true, isError = false)
                 } else {
-                    state.copy(isRefreshing = true, error = null)
+                    state.copy(isRefreshing = true, isError = false)
                 }
             }
             val result = feedRepository.refreshAllFeeds()
@@ -137,12 +137,8 @@ class FeedListViewModel(
                             items = state.items.map { it.copy(isArticleLoading = false) },
                         )
                     },
-                    onFailure = { error ->
-                        state.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            error = error.message ?: "フィードの更新に失敗しました",
-                        )
+                    onFailure = {
+                        state.copy(isLoading = false, isRefreshing = false, isError = true)
                     },
                 )
             }

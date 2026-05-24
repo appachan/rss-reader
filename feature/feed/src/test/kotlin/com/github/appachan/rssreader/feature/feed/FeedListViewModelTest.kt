@@ -7,7 +7,6 @@ import com.github.appachan.rssreader.shared.domain.model.FeedId
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,10 +47,11 @@ class FeedListViewModelTest :
 
             val viewModel = FeedListViewModel(fake, fake)
 
-            // Nothing has run yet: still the default state.
+            // Nothing has run yet: still the default state (load() has no constructor side effect).
             viewModel.uiState.value shouldBe FeedListUiState()
 
             // load() launches: isLoading flips on, feed list not fetched yet.
+            viewModel.load()
             scheduler.runCurrent()
             viewModel.uiState.value.isLoading shouldBe true
             viewModel.uiState.value.items shouldHaveSize 0
@@ -97,6 +97,7 @@ class FeedListViewModelTest :
                     articleBaseDelayMs = ARTICLE_BASE_DELAY,
                 )
             val viewModel = FeedListViewModel(fake, fake)
+            viewModel.load()
             scheduler.advanceUntilIdle()
             viewModel.uiState.value.items shouldHaveSize 1
 
@@ -127,11 +128,12 @@ class FeedListViewModelTest :
                     feedListDelayMs = FEED_LIST_DELAY,
                 )
             val viewModel = FeedListViewModel(fake, fake)
+            viewModel.load()
 
             scheduler.advanceUntilIdle()
             with(viewModel.uiState.value) {
                 isLoading shouldBe false
-                error.shouldNotBeNull()
+                isError shouldBe true
                 items shouldHaveSize 0
             }
 
@@ -139,7 +141,7 @@ class FeedListViewModelTest :
             viewModel.retry()
             scheduler.advanceUntilIdle()
             with(viewModel.uiState.value) {
-                error shouldBe null
+                isError shouldBe false
                 items shouldHaveSize 1
             }
         }
