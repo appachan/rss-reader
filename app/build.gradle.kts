@@ -27,6 +27,9 @@ android {
 
 dependencies {
     implementation(projects.feature.feed)
+    implementation(projects.feature.feedAsync)
+    implementation(projects.feature.feedReducer)
+    implementation(projects.feature.feedOrbit)
     implementation(projects.shared.domain)
     implementation(projects.shared.infrastructure)
     implementation(projects.shared.ui)

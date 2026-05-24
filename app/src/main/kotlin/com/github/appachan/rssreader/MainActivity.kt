@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.github.appachan.rssreader.feature.feed.FeedListScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +22,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         setContent {
-            MaterialTheme { Surface(modifier = Modifier.fillMaxSize()) { FeedListScreen() } }
+            MaterialTheme { Surface(modifier = Modifier.fillMaxSize()) { RssReaderApp() } }
         }
     }
 }
