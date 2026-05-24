@@ -231,6 +231,36 @@ class FeedListViewModelTest :
             }
         }
 
+        test("submitAddFeed: a non-https URL is rejected locally") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val fake = FakeFeedDataSource(feeds = emptyList())
+            val viewModel = FeedListViewModel(fake, fake)
+
+            viewModel.showAddSheet()
+            viewModel.onAddUrlChange("http://example.com/feed.xml")
+            viewModel.submitAddFeed()
+            dispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.uiState.value.addFeedError shouldBe AddFeedError.INVALID_URL
+            fake.addedUrls shouldHaveSize 0
+        }
+
+        test("submitAddFeed: ignores a second submit while one is in flight") {
+            val dispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(dispatcher)
+            val fake = FakeFeedDataSource(feeds = emptyList())
+            val viewModel = FeedListViewModel(fake, fake)
+
+            viewModel.showAddSheet()
+            viewModel.onAddUrlChange("https://example.com/feed.xml")
+            viewModel.submitAddFeed()
+            viewModel.submitAddFeed()
+            dispatcher.scheduler.advanceUntilIdle()
+
+            fake.addedUrls shouldHaveSize 1
+        }
+
         test("confirmDeleteFeed: deletes via the repository and clears the pending state") {
             val dispatcher = StandardTestDispatcher()
             Dispatchers.setMain(dispatcher)

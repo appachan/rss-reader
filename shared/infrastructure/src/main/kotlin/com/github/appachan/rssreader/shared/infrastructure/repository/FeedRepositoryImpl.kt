@@ -46,18 +46,21 @@ internal class FeedRepositoryImpl(
             runCatching {
                 val normalized = url.trim()
                 require(normalized.isNotEmpty()) { "Blank feed URL" }
-                check(queries.selectByUrl(normalized).executeAsOneOrNull() == null) {
-                    "Feed already subscribed: $normalized"
-                }
                 val remote = feedFetcher.fetch(normalized)
-                queries.insertFeed(
-                    url = normalized,
-                    title = remote.title?.takeIf { it.isNotBlank() } ?: normalized,
-                    site_url = remote.siteUrl,
-                    description = remote.description,
-                    last_fetched_at = Clock.System.now().toEpochMilliseconds(),
-                )
-                FeedId(queries.lastInsertedId().executeAsOne())
+                // One transaction keeps the id read atomic with the insert and dedup check.
+                database.transactionWithResult {
+                    check(queries.selectByUrl(normalized).executeAsOneOrNull() == null) {
+                        "Feed already subscribed: $normalized"
+                    }
+                    queries.insertFeed(
+                        url = normalized,
+                        title = remote.title?.takeIf { it.isNotBlank() } ?: normalized,
+                        site_url = remote.siteUrl,
+                        description = remote.description,
+                        last_fetched_at = Clock.System.now().toEpochMilliseconds(),
+                    )
+                    FeedId(queries.lastInsertedId().executeAsOne())
+                }
             }
         }
 

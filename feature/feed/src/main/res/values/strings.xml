@@ -10,7 +10,7 @@
     <string name="feed_add_url_label">Feed URL</string>
     <string name="feed_add_confirm">Add</string>
     <string name="feed_add_cancel">Cancel</string>
-    <string name="feed_add_error_invalid_url">Enter a valid http(s) URL</string>
+    <string name="feed_add_error_invalid_url">Enter a valid https:// URL</string>
     <string name="feed_add_error_could_not_add">Couldn\'t add this feed. Check the URL and try again.</string>
 
     <string name="feed_delete_action">Delete feed</string>

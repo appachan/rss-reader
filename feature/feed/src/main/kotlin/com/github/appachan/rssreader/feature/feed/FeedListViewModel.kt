@@ -99,12 +99,13 @@ class FeedListViewModel(
     fun submitAddFeed() {
         if (_uiState.value.isAddingFeed) return
         val url = _uiState.value.addUrlInput.trim()
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        if (!url.startsWith("https://", ignoreCase = true)) {
             _uiState.update { it.copy(addFeedError = AddFeedError.INVALID_URL) }
             return
         }
+        // Mark in-flight synchronously so a second tap before the coroutine runs is ignored.
+        _uiState.update { it.copy(isAddingFeed = true, addFeedError = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isAddingFeed = true, addFeedError = null) }
             feedRepository
                 .addFeed(url)
                 .fold(
