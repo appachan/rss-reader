@@ -10,11 +10,11 @@ Android (Kotlin) の RSS リーダー。
 変更タイプ別の目安:
 
 - Kotlin コード変更 → `./gradlew detekt` と該当モジュールの `:<module>:test`
-- フォーマット崩れ → `./gradlew ktfmtFormat`（自動修正）→ `./gradlew ktfmtCheck`
+- フォーマット崩れ → `./gradlew spotlessApply`（自動修正）→ `./gradlew spotlessCheck`
 - Gradle / convention plugin 変更 → 該当モジュールの `:assemble` などピンポイントで実行
 - UI / APK の最終確認が必要なときのみ → `./gradlew :app:assembleDebug`
 
-`./gradlew check` は detekt / ktfmt / 全モジュールの test / Android Lint を一括で実行するため
+`./gradlew check` は detekt / spotless / 全モジュールの test / Android Lint を一括で実行するため
 遅い。日常の検証では使わず、PR 直前など全体確認が必要なときだけ使う。
 
 ## Individual tasks
@@ -22,8 +22,8 @@ Android (Kotlin) の RSS リーダー。
 | Task                          | 用途                              |
 |-------------------------------|----------------------------------|
 | `./gradlew detekt`            | 静的解析                         |
-| `./gradlew ktfmtCheck`        | フォーマット検査                 |
-| `./gradlew ktfmtFormat`       | フォーマット自動修正             |
+| `./gradlew spotlessCheck`     | フォーマット検査                 |
+| `./gradlew spotlessApply`     | フォーマット自動修正             |
 | `./gradlew :<module>:test`    | 該当モジュールのユニットテスト   |
 | `./gradlew :app:assembleDebug`| Debug APK ビルド                 |
 
