@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 #
-# Provisions the Android SDK for "Claude Code on the web" sessions so the
-# SDK is baked into the environment snapshot and reused on later sessions.
+# Android SDK provisioning for "Claude Code on the web" sessions, so the SDK is
+# baked into the environment snapshot and reused on later sessions.
 #
-# Wire this up as the environment's Setup script (claude.ai/code → environment
-# settings) with a single line:
-#
-#     bash .claude/scripts/setup-claude-code-web.sh
+# IMPORTANT: the setup script runs BEFORE the repository is checked out, so it
+# cannot be referenced by path (e.g. `bash .claude/scripts/...` fails with 127).
+# This file is the version-controlled source of truth: paste its contents
+# verbatim into the environment's Setup script field (claude.ai/code →
+# environment settings). It is intentionally self-contained with no repo deps.
 #
 # Prerequisites configured in the same environment settings dialog:
 #   - Network access = Custom (defaults + dl.google.com, maven.google.com;
@@ -19,23 +20,11 @@
 set -euo pipefail
 
 SDK_ROOT="${ANDROID_HOME:-/opt/android-sdk}"
-CMDLINE_VERSION="11076708"
-CMDLINE_URL="https://dl.google.com/android/repository/commandlinetools-linux-${CMDLINE_VERSION}_latest.zip"
-SDKMANAGER="${SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
-
-# Run from the repo root regardless of the caller's cwd so the version
-# catalog lookup below is stable.
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$REPO_ROOT"
-
-# compileSdk is the source of truth in the version catalog; track it instead
-# of hardcoding so the installed platform never drifts from the build.
+# Mirrors compileSdk in gradle/libs.versions.toml (not readable here: the repo
+# is not checked out yet when this runs).
 COMPILE_SDK="36"
-CATALOG="gradle/libs.versions.toml"
-if [ -f "$CATALOG" ]; then
-  parsed="$(sed -n 's/^compileSdk *= *"\([0-9][0-9]*\)".*/\1/p' "$CATALOG" | head -n1)"
-  [ -n "$parsed" ] && COMPILE_SDK="$parsed"
-fi
+CMDLINE_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+SDKMANAGER="${SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
 
 command -v unzip >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq unzip; }
 
@@ -54,8 +43,3 @@ yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null
   "platform-tools" \
   "platforms;android-${COMPILE_SDK}" \
   "build-tools;${COMPILE_SDK}.0.0" >/dev/null
-
-# Bake the Gradle distribution into the snapshot too. --version only downloads
-# and unzips the wrapper distribution; it does not configure the build, so it
-# does not require the Google Maven repository.
-./gradlew --version >/dev/null 2>&1 || true
