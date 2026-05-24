@@ -4,7 +4,11 @@ plugins {
     alias(libs.plugins.sqldelight)
 }
 
-android { namespace = "com.github.appachan.rssreader.shared.infrastructure" }
+android {
+    namespace = "com.github.appachan.rssreader.shared.infrastructure"
+    // Opt in over the convention default (false) so the HTTP client can gate logging on DEBUG.
+    buildFeatures { buildConfig = true }
+}
 
 sqldelight {
     databases {

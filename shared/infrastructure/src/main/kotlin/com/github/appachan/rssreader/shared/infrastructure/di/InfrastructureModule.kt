@@ -4,6 +4,7 @@ import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.github.appachan.rssreader.shared.domain.repository.ArticleRepository
 import com.github.appachan.rssreader.shared.domain.repository.FeedRepository
+import com.github.appachan.rssreader.shared.infrastructure.BuildConfig
 import com.github.appachan.rssreader.shared.infrastructure.db.FeedDatabase
 import com.github.appachan.rssreader.shared.infrastructure.remote.FeedFetcher
 import com.github.appachan.rssreader.shared.infrastructure.remote.RssParserFeedFetcher
@@ -13,6 +14,7 @@ import com.prof18.rssparser.RssParser
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
@@ -41,7 +43,8 @@ val infrastructureModule = module {
                 requestTimeoutMillis = REQUEST_TIMEOUT_MS
                 connectTimeoutMillis = CONNECT_TIMEOUT_MS
             }
-            install(Logging)
+            // Full logging in debug, silent in release.
+            install(Logging) { level = if (BuildConfig.DEBUG) LogLevel.ALL else LogLevel.NONE }
         }
     }
     single { RssParser() }
