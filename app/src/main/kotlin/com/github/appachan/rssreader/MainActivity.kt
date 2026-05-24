@@ -14,9 +14,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    Text(text = "rss-reader")
-                }
+                Surface(modifier = Modifier.fillMaxSize()) { Text(text = "rss-reader") }
             }
         }
     }
