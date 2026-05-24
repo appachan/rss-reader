@@ -26,7 +26,7 @@ Repository・SQLDelight スキーマ・DI・ナビゲーションはいずれも
 | タイムスタンプ | `kotlinx-datetime` の `Instant`（catalog に追加）。DB は epoch-millis `INTEGER`、境界で変換 |
 | 既読の保存 | `ArticleReadState` 別テーブル（`article_id` キー）。refresh が既読を壊さない構造的保証 |
 | Repository | offline-first / single source of truth。観測 = `Flow`、コマンド = `suspend … : Result` |
-| RSS/Atom パーサ | KMP 対応ライブラリ採用方針。第一候補 `prof18/RSS-Parser`。**#13 で ADR 化** |
+| RSS/Atom パーサ | `prof18/RSS-Parser`（KMP 対応）を採用。**ADR-0014（#12 で前倒し確定）** |
 | Nav3 2 ペイン | 記事一覧 \| 記事詳細（ArticleList \| ArticleDetail） |
 | DI | `infrastructureModule`（実装/外部接続）＋ `feedModule`（ViewModel）を `:app` で集約 |
 
@@ -222,29 +222,28 @@ sealed interface FeedNavKey : NavKey
 ADR-0008 は Ktor を**取得のみ**に限定し、パースは未決のまま。ADR-0002（KMP 前提）により、
 JVM 専用の ROME や Android 専用 RSS ライブラリは選べない。
 
-- **方針: KMP 対応ライブラリを採用する。第一候補は `prof18/RSS-Parser`  （RSS / Atom / JSON Feed 対応、Kotlin Multiplatform 対応で ADR-0002 と整合）。
-- 取得は ADR-0008 の Ktor を使うか、ライブラリ内蔵の取得＋生文字列パースを使うかの 2 択
-  （#13 で確定）。
+- **方針: KMP 対応ライブラリを採用する。`prof18/RSS-Parser`  （RSS / Atom / JSON Feed 対応、Kotlin Multiplatform 対応で ADR-0002 と整合）を採用した（ADR-0014）。
+- 取得は ADR-0008 の Ktor で行い、得た生文字列を `RssParser.parse(...)` に渡す方式に確定した
+  （HTTP は Ktor に集約）。
 - パーサ出力は mapper でドメインの `Feed` / `Article` に正規化し、§3 の guid / title / 日時の
   フォールバックを 1 箇所に集約する。
-- **#13（記事取得）で新規 ADR 化する**。ライブラリ選定は KMP という横断制約と
-  ライブラリ vs 自前の保守性トレードオフを伴い、ADR-0008 が意図的にパースを後回しにしている
-  ため、専用 ADR が妥当。#13 で採用を確定し、依存を catalog に追加する。本メモは方針提示まで。
+- ADR 化は当初 #13 を想定していたが、#12（フィード登録）が登録時検証でパースを最初に必要と
+  したため **ADR-0014 として #12 に前倒し**した。記事取得（#13）も同じパーサ・mapper 方針を継ぐ。
 
 ## 7. 既存 ADR との整合・追加提案
 
 - §1〜§6 の決定はいずれも既存 Accepted ADR と矛盾しない。
-- **新規 ADR を提案**: RSS/Atom パーサ（#13）。理由は §6 の通り。
+- **RSS/Atom パーサ ADR**: ADR-0014 として #12 で確定済み（当初 #13 想定から前倒し）。理由は §6。
 - **version catalog への追加**（ADR ではないが要記録、いずれも ADR-0002 と整合）:
   - `kotlinx-datetime`（本メモで確定。§1）
-  - RSS パーサライブラリ（#13 で確定・追加。§6）
+  - `rssparser`（ADR-0014, #12 で追加。§6）
 
 ## 8. 各 TASK への入口
 
 | TASK | 本メモの参照箇所 |
 |---|---|
 | #12 フィード登録・削除 | §1 `Feed` / §2 `FeedRepository.addFeed/removeFeed` / §3 `Feed` テーブル / §4 DI |
-| #13 記事一覧取得・表示 | §2 `ArticleRepository` / §3 `Article` 表・upsert / §5 ナビ / §6 パーサ（ADR 化） |
+| #13 記事一覧取得・表示 | §2 `ArticleRepository` / §3 `Article` 表・upsert / §5 ナビ / §6 パーサ（ADR-0014） |
 | #14 既読管理 | §1 `isRead` / §2 `markRead`/`markUnread` / §3 `ArticleReadState` |
 | #15 WebView 記事表示 | §5 `ArticleDetailKey`（WebView vs Custom Tabs は #15 で確定） |
 | #16 バックグラウンド更新 | §2 `refreshAllFeeds` / §4 WorkManager + Koin |
