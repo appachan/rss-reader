@@ -1,4 +1,6 @@
-import com.ncorti.ktfmt.gradle.KtfmtExtension
+import com.diffplug.gradle.spotless.SpotlessExtension
+import ext.libs
+import ext.stringVersion
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -9,7 +11,7 @@ class QualityConventionPlugin : Plugin<Project> {
         with(target) {
             with(pluginManager) {
                 apply("io.gitlab.arturbosch.detekt")
-                apply("com.ncorti.ktfmt.gradle")
+                apply("com.diffplug.spotless")
             }
 
             extensions.configure<DetektExtension> {
@@ -19,8 +21,17 @@ class QualityConventionPlugin : Plugin<Project> {
                 parallel = true
             }
 
-            extensions.configure<KtfmtExtension> {
-                kotlinLangStyle()
+            val ktfmtVersion = libs.stringVersion("ktfmt")
+            extensions.configure<SpotlessExtension> {
+                kotlin {
+                    target("**/*.kt")
+                    targetExclude("**/build/**")
+                    ktfmt(ktfmtVersion).kotlinlangStyle()
+                }
+                kotlinGradle {
+                    target("**/*.gradle.kts")
+                    ktfmt(ktfmtVersion).kotlinlangStyle()
+                }
             }
         }
     }

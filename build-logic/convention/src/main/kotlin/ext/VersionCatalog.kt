@@ -10,3 +10,6 @@ internal val Project.libs: VersionCatalog
 
 internal fun VersionCatalog.intVersion(name: String): Int =
     findVersion(name).get().requiredVersion.toInt()
+
+internal fun VersionCatalog.stringVersion(name: String): String =
+    findVersion(name).get().requiredVersion
