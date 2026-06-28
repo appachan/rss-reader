@@ -1,4 +1,4 @@
-package com.github.appachan.rssreader.feature.feed
+package com.github.appachan.rssreader.testing
 
 import com.github.appachan.rssreader.shared.domain.model.Article
 import com.github.appachan.rssreader.shared.domain.model.ArticleId
@@ -69,8 +69,8 @@ class FakeFeedDataSource(
         }
         delay(feedListDelayMs)
         refreshCount++
-        // Mirror production (FakeRssStore), which rebuilds feeds with a fresh lastFetchedAt each
-        // refresh so the StateFlow re-emits and observeFeeds re-runs restartArticleJobs.
+        // Rebuild feeds with a fresh lastFetchedAt each refresh so the StateFlow re-emits and
+        // observers (feed-list ViewModel) re-run dependent jobs.
         feedsFlow.value = feeds.map {
             it.copy(lastFetchedAt = Instant.fromEpochMilliseconds(refreshCount.toLong()))
         }
