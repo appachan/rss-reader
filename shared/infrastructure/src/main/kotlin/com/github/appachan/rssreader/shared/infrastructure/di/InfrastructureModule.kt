@@ -1,5 +1,6 @@
 package com.github.appachan.rssreader.shared.infrastructure.di
 
+import androidx.sqlite.db.SupportSQLiteDatabase
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.github.appachan.rssreader.shared.domain.repository.ArticleRepository
@@ -31,6 +32,14 @@ val infrastructureModule = module {
             schema = FeedDatabase.Schema,
             context = androidContext(),
             name = "FeedDatabase",
+            // AndroidSqliteDriver leaves FK enforcement off by default; turn it on so deleting a
+            // feed cascades to its Article rows (Article.sq ON DELETE CASCADE).
+            callback =
+                object : AndroidSqliteDriver.Callback(FeedDatabase.Schema) {
+                    override fun onOpen(db: SupportSQLiteDatabase) {
+                        db.setForeignKeyConstraintsEnabled(true)
+                    }
+                },
         )
     }
     single { FeedDatabase(get()) }
@@ -51,7 +60,7 @@ val infrastructureModule = module {
     single<FeedFetcher> { RssParserFeedFetcher(get(), get()) }
 
     single<FeedRepository> { FeedRepositoryImpl(get(), get(), Dispatchers.IO) }
-    single<ArticleRepository> { ArticleRepositoryImpl() }
+    single<ArticleRepository> { ArticleRepositoryImpl(get(), Dispatchers.IO) }
 }
 
 private const val REQUEST_TIMEOUT_MS = 15_000L

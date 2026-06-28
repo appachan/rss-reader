@@ -1,0 +1,28 @@
+-- Queries for the Article table. Schema definition lives in 2.sqm.
+--
+-- `guid` is the per-feed dedup key (synthesized by the parser when the feed omits it). UNIQUE
+-- (feed_id, guid) — enforced by the index defined in 2.sqm — lets refresh upsert without
+-- duplicating rows or churning the id (keeps a future ArticleReadState row attached).
+
+-- Undated articles (published_at NULL) sort last; id breaks ties deterministically.
+selectByFeed:
+SELECT * FROM Article WHERE feed_id = ? ORDER BY published_at DESC, id DESC;
+
+selectAll:
+SELECT * FROM Article ORDER BY published_at DESC, id DESC;
+
+selectById:
+SELECT * FROM Article WHERE id = ?;
+
+-- Portable upsert in two statements: native UPSERT (ON CONFLICT DO UPDATE) needs SQLite 3.24, but
+-- the minSdk-29 bundled engine is 3.22. INSERT OR IGNORE leaves an existing (feed_id, guid) row's
+-- id untouched, then updateArticleByGuid refreshes only the payload. Identity (id, feed_id, guid)
+-- is immutable; refresh never delete+reinserts.
+insertOrIgnoreArticle:
+INSERT OR IGNORE INTO Article(feed_id, guid, title, url, author, summary, content, published_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+updateArticleByGuid:
+UPDATE Article
+SET title = ?, url = ?, author = ?, summary = ?, content = ?, published_at = ?
+WHERE feed_id = ? AND guid = ?;
