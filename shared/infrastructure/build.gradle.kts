@@ -14,6 +14,8 @@ sqldelight {
     databases {
         create("FeedDatabase") {
             packageName.set("com.github.appachan.rssreader.shared.infrastructure.db")
+            // Schema lives in .sqm files only; .sq holds queries.
+            deriveSchemaFromMigrations.set(true)
         }
     }
 }

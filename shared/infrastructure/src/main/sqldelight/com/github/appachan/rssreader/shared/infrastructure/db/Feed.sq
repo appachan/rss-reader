@@ -1,13 +1,4 @@
--- Subscribed feeds. Timestamps are epoch-millis; the mapper converts to kotlinx-datetime Instant at
--- the boundary. `url` is UNIQUE so a feed can't be subscribed twice.
-CREATE TABLE Feed (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    url TEXT NOT NULL UNIQUE,
-    title TEXT NOT NULL,
-    site_url TEXT,
-    description TEXT,
-    last_fetched_at INTEGER
-);
+-- Queries for the Feed table. Schema definition lives in 1.sqm.
 
 selectAll:
 SELECT * FROM Feed ORDER BY id;
