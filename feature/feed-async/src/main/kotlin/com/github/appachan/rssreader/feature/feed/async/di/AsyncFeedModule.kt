@@ -1,10 +1,12 @@
 package com.github.appachan.rssreader.feature.feed.async.di
 
+import com.github.appachan.rssreader.feature.feed.async.AsyncFeedListViewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 /**
- * Pattern ② DI. Empty until TASK-011 adds the ViewModel (e.g.
- * `viewModelOf(::AsyncFeedListViewModel)`). Pre-registered in `RssReaderApplication`, so
- * implementing the pattern needs no app-level wiring.
+ * Pattern ② DI. Depends only on the domain repository interfaces: the concrete implementations are
+ * bound in `:app`, so this module stays decoupled from `:shared:infrastructure`. Pre-registered in
+ * `RssReaderApplication`, so no app-level wiring change is needed.
  */
-val asyncFeedModule = module {}
+val asyncFeedModule = module { viewModelOf(::AsyncFeedListViewModel) }
