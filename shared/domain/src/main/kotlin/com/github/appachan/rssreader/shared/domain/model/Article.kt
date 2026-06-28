@@ -13,4 +13,6 @@ data class Article(
     val content: String?,
     val publishedAt: Instant?,
     val isRead: Boolean,
-)
+) {
+    companion object
+}

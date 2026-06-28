@@ -4,6 +4,7 @@ import com.github.appachan.rssreader.shared.domain.model.Article
 import com.github.appachan.rssreader.shared.domain.model.ArticleId
 import com.github.appachan.rssreader.shared.domain.model.Feed
 import com.github.appachan.rssreader.shared.domain.model.FeedId
+import com.github.appachan.rssreader.testing.FakeFeedDataSource
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.collections.shouldHaveSize

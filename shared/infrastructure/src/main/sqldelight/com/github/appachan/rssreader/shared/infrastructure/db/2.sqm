@@ -1,0 +1,19 @@
+-- Adds the cached articles table. feed_id references Feed with ON DELETE CASCADE, so removing a
+-- feed drops its articles (requires PRAGMA foreign_keys = ON; enabled in the driver). Timestamps
+-- are epoch-millis; the mapper converts to kotlinx-datetime Instant at the boundary.
+CREATE TABLE Article (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    feed_id INTEGER NOT NULL REFERENCES Feed(id) ON DELETE CASCADE,
+    guid TEXT NOT NULL,
+    title TEXT NOT NULL,
+    url TEXT NOT NULL,
+    author TEXT,
+    summary TEXT,
+    content TEXT,
+    published_at INTEGER
+);
+
+CREATE UNIQUE INDEX article_feed_guid ON Article(feed_id, guid);
+
+-- Serves the newest-first list ordering in selectByFeed/selectAll without a sort step.
+CREATE INDEX article_feed_published ON Article(feed_id, published_at DESC);

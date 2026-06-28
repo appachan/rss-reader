@@ -74,4 +74,6 @@ data class FeedListActions(
     val onRequestDelete: (FeedId) -> Unit = {},
     val onCancelDelete: () -> Unit = {},
     val onConfirmDelete: () -> Unit = {},
+    // Navigation to a feed's article list. Supplied by the app shell (not the ViewModel).
+    val onFeedClick: (FeedId) -> Unit = {},
 )
