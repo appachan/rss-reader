@@ -1,6 +1,7 @@
 package com.github.appachan.rssreader
 
 import android.app.Application
+import com.github.appachan.rssreader.feature.article.di.articleModule
 import com.github.appachan.rssreader.feature.feed.async.di.asyncFeedModule
 import com.github.appachan.rssreader.feature.feed.di.feedModule
 import com.github.appachan.rssreader.feature.feed.orbit.di.orbitFeedModule
@@ -17,6 +18,7 @@ class RssReaderApplication : Application() {
             modules(
                 infrastructureModule,
                 feedModule,
+                articleModule,
                 asyncFeedModule,
                 reducerFeedModule,
                 orbitFeedModule,

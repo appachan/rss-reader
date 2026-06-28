@@ -35,6 +35,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 rootProject.name = "rss-reader"
 
 include(":app")
+include(":feature:article")
 include(":feature:feed")
 include(":feature:feed-async")
 include(":feature:feed-reducer")

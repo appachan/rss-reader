@@ -26,6 +26,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.feature.article)
     implementation(projects.feature.feed)
     implementation(projects.feature.feedAsync)
     implementation(projects.feature.feedReducer)
