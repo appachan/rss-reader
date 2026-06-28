@@ -9,15 +9,18 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.github.appachan.rssreader.feature.article.ArticleListScreen
 import com.github.appachan.rssreader.feature.feed.FeedListScreen
 import com.github.appachan.rssreader.feature.feed.async.AsyncFeedListScreen
 import com.github.appachan.rssreader.feature.feed.orbit.OrbitFeedListScreen
 import com.github.appachan.rssreader.feature.feed.reducer.ReducerFeedListScreen
+import com.github.appachan.rssreader.navigation.ArticleListKey
 import com.github.appachan.rssreader.navigation.AsyncPattern
 import com.github.appachan.rssreader.navigation.FlatPattern
 import com.github.appachan.rssreader.navigation.OrbitPattern
 import com.github.appachan.rssreader.navigation.PatternTab
 import com.github.appachan.rssreader.navigation.ReducerPattern
+import com.github.appachan.rssreader.shared.domain.model.FeedId
 import com.github.appachan.rssreader.shared.ui.PatternNavigationBar
 
 /**
@@ -55,10 +58,20 @@ fun RssReaderApp() {
             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
             entryProvider =
                 entryProvider {
-                    entry<FlatPattern> { FeedListScreen() }
+                    entry<FlatPattern> {
+                        FeedListScreen(
+                            onFeedClick = { feedId -> backStack.add(ArticleListKey(feedId.value)) }
+                        )
+                    }
                     entry<AsyncPattern> { AsyncFeedListScreen() }
                     entry<ReducerPattern> { ReducerFeedListScreen() }
                     entry<OrbitPattern> { OrbitFeedListScreen() }
+                    entry<ArticleListKey> { key ->
+                        ArticleListScreen(
+                            feedId = FeedId(key.feedId),
+                            onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
                 },
         )
     }

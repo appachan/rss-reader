@@ -1,5 +1,6 @@
 package com.github.appachan.rssreader.feature.feed
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,7 +50,11 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun FeedListScreen(modifier: Modifier = Modifier, viewModel: FeedListViewModel = koinViewModel()) {
+fun FeedListScreen(
+    modifier: Modifier = Modifier,
+    onFeedClick: (FeedId) -> Unit = {},
+    viewModel: FeedListViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.load() }
 
@@ -80,6 +85,7 @@ fun FeedListScreen(modifier: Modifier = Modifier, viewModel: FeedListViewModel =
                 onRequestDelete = viewModel::requestDeleteFeed,
                 onCancelDelete = viewModel::cancelDeleteFeed,
                 onConfirmDelete = viewModel::confirmDeleteFeed,
+                onFeedClick = onFeedClick,
             ),
     )
 }
@@ -117,7 +123,7 @@ private fun FeedListScreen(
             when {
                 uiState.isLoading && uiState.items.isEmpty() -> LoadingContent()
                 uiState.isError && uiState.items.isEmpty() -> ErrorContent(actions.onRetry)
-                else -> FeedList(uiState.items, actions.onRequestDelete)
+                else -> FeedList(uiState.items, actions.onFeedClick, actions.onRequestDelete)
             }
         }
     }
@@ -165,20 +171,30 @@ private fun ErrorContent(onRetry: () -> Unit) {
 }
 
 @Composable
-private fun FeedList(items: List<FeedRowUiModel>, onRequestDelete: (FeedId) -> Unit) {
+private fun FeedList(
+    items: List<FeedRowUiModel>,
+    onFeedClick: (FeedId) -> Unit,
+    onRequestDelete: (FeedId) -> Unit,
+) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         itemsIndexed(items = items, key = { _, row -> row.feedId.value }) { index, row ->
-            FeedRow(row, onRequestDelete)
+            FeedRow(row, onFeedClick, onRequestDelete)
             if (index < items.lastIndex) HorizontalDivider()
         }
     }
 }
 
 @Composable
-private fun FeedRow(row: FeedRowUiModel, onRequestDelete: (FeedId) -> Unit) {
+private fun FeedRow(
+    row: FeedRowUiModel,
+    onFeedClick: (FeedId) -> Unit,
+    onRequestDelete: (FeedId) -> Unit,
+) {
     Row(
         modifier =
-            Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
+            Modifier.fillMaxWidth()
+                .clickable { onFeedClick(row.feedId) }
+                .padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {

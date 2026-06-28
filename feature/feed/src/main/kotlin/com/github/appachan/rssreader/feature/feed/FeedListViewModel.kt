@@ -118,6 +118,9 @@ class FeedListViewModel(
                                 addFeedError = null,
                             )
                         }
+                        // addFeed only persists feed metadata; pull the new feed's articles so its
+                        // row resolves instead of spinning on "loading" forever.
+                        triggerRefresh(initial = false)
                     },
                     onFailure = {
                         _uiState.update {

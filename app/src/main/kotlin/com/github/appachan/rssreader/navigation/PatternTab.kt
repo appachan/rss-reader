@@ -12,6 +12,13 @@ import kotlinx.serialization.Serializable
 @Serializable data object OrbitPattern : NavKey
 
 /**
+ * A feed's article list, pushed onto the backstack from the Flat pattern's feed list. Not a tab:
+ * while it is on top, no [PatternTab] matches the backstack tip, so the bar keeps the Flat tab
+ * selected.
+ */
+@Serializable data class ArticleListKey(val feedId: Long) : NavKey
+
+/**
  * The four UI state-management patterns surfaced in the bottom navigation. [key] is the Nav3
  * destination and [label] the technique name shown in the bar. Declaration order is tab order. The
  * bottom-navigation shell and the [NavDisplay] entry graph both derive from this single list, so
