@@ -29,6 +29,7 @@ kotlinxDatetime = "0.6.2"
 kotlinxSerialization = "1.11.0"
 ktor = "3.5.0"
 mockk = "1.14.3"
+orbit = "11.0.0"
 robolectric = "4.16.1"
 roborazzi = "1.63.0"
 rssparser = "6.1.0"
@@ -58,6 +59,12 @@ androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", vers
 
 # AndroidX WorkManager
 androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "androidxWork" }
+
+# Orbit MVI
+orbit-core = { module = "org.orbit-mvi:orbit-core", version.ref = "orbit" }
+orbit-viewmodel = { module = "org.orbit-mvi:orbit-viewmodel", version.ref = "orbit" }
+orbit-compose = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
+orbit-test = { module = "org.orbit-mvi:orbit-test", version.ref = "orbit" }
 
 # Koin (BOM-managed)
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koinBom" }

@@ -10,6 +10,8 @@ dependencies {
     implementation(projects.shared.domain)
     implementation(projects.shared.ui)
 
+    implementation(libs.androidx.compose.material.icons.core)
+
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
@@ -20,4 +22,11 @@ dependencies {
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.compose.viewmodel)
     implementation(libs.koin.compose.navigation3)
+
+    // Pattern ④: Orbit MVI (state reducer DSL + side effects, KMP-ready).
+    implementation(libs.orbit.core)
+    implementation(libs.orbit.viewmodel)
+    implementation(libs.orbit.compose)
+
+    testImplementation(libs.orbit.test)
 }
