@@ -1,0 +1,22 @@
+<resources>
+    <string name="feed_list_title">Feeds</string>
+    <string name="feed_list_retry">Retry</string>
+    <string name="feed_list_article_loading">Loading latest article…</string>
+    <string name="feed_list_no_articles">No articles</string>
+    <string name="feed_list_error">Failed to update feeds</string>
+
+    <string name="feed_add_action">Add feed</string>
+    <string name="feed_add_title">Add feed</string>
+    <string name="feed_add_url_label">Feed URL</string>
+    <string name="feed_add_confirm">Add</string>
+    <string name="feed_add_cancel">Cancel</string>
+    <string name="feed_add_error_invalid_url">Enter a valid https:// URL</string>
+    <string name="feed_add_error_could_not_add">Couldn\'t add this feed. Check the URL and try again.</string>
+
+    <string name="feed_delete_action">Delete feed</string>
+    <string name="feed_delete_title">Delete feed</string>
+    <string name="feed_delete_message">Remove “%1$s” from your feeds?</string>
+    <string name="feed_delete_confirm">Delete</string>
+    <string name="feed_delete_cancel">Cancel</string>
+    <string name="feed_delete_failed">Failed to delete feed</string>
+</resources>

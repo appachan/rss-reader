@@ -63,7 +63,11 @@ fun RssReaderApp() {
                             onFeedClick = { feedId -> backStack.add(ArticleListKey(feedId.value)) }
                         )
                     }
-                    entry<AsyncPattern> { AsyncFeedListScreen() }
+                    entry<AsyncPattern> {
+                        AsyncFeedListScreen(
+                            onFeedClick = { feedId -> backStack.add(ArticleListKey(feedId.value)) }
+                        )
+                    }
                     entry<ReducerPattern> { ReducerFeedListScreen() }
                     entry<OrbitPattern> { OrbitFeedListScreen() }
                     entry<ArticleListKey> { key ->
