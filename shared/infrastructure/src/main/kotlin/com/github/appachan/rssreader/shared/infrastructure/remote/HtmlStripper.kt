@@ -21,5 +21,6 @@ internal fun stripHtml(raw: String?): String? {
     return decoded.replace(WHITESPACE_REGEX, " ").trim().ifEmpty { null }
 }
 
-private val TAG_REGEX = Regex("<[^>]*>")
+// Excluding '<' stops each attempt at the next '<', so unclosed '<' runs stay linear, not O(n^2).
+private val TAG_REGEX = Regex("<[^<>]*>")
 private val WHITESPACE_REGEX = Regex("\\s+")

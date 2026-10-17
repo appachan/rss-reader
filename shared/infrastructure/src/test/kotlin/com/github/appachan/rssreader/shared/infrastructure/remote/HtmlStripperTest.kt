@@ -3,6 +3,7 @@ package com.github.appachan.rssreader.shared.infrastructure.remote
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import kotlin.time.Duration.Companion.seconds
 
 class HtmlStripperTest :
     FunSpec({
@@ -24,5 +25,10 @@ class HtmlStripperTest :
 
         test("leaves plain text untouched apart from trimming") {
             stripHtml("  plain summary  ") shouldBe "plain summary"
+        }
+
+        test("handles a long run of unclosed '<' in linear time").config(timeout = 2.seconds) {
+            val raw = "<".repeat(200_000)
+            stripHtml(raw) shouldBe raw
         }
     })
